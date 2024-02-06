@@ -10,12 +10,19 @@
 constexpr float range = 3.7 - 3.4;
 
 constexpr char voltage_path[] = "/sys/class/power_supply/battery/voltage_now";
-constexpr char target[] = "/sys/class/power_supply/bms/capacity";
-constexpr char need_read[] = "/sys/class/power_supply/bms/capacity_raw";
-constexpr char CloseApp[] =
+
+constexpr char target_path[] = "/sys/class/power_supply/bms/capacity";
+
+constexpr char need_read_path[] = "/sys/class/power_supply/bms/capacity_raw";
+
+constexpr char CloseAppCmd[] =
     "nohup am start com.miui.home/com.miui.home.launcher.Launcher >/dev/null "
     "2>&1 &";
-constexpr char ChargingStatus[] = "/sys/class/power_supply/battery/status";
+constexpr char ChargingStatus_Path[] = "/sys/class/power_supply/battery/status";
+
+constexpr char charge_current_Path[] =
+    "/sys/class/power_supply/battery/constant_charge_current";
+
 constexpr std::array WhiteList{"com.miui.home", "bin.mt.plus",
                                "com.omarea.vtools", "com.tencent.mobileqq",
                                "com.tencent.mm"};
@@ -47,8 +54,10 @@ static inline void appCloser(const int &capacity)
             }
         }
         // std::cout << "关闭\n";
-        system(CloseApp);
+        lock_val(11725000, charge_current_Path);
+        system(CloseAppCmd);
     }
+    return;
 }
 static inline void *heavyThread(void *)
 {
@@ -56,18 +65,20 @@ static inline void *heavyThread(void *)
     static std::mutex confMutex;
 
     /*
-    const char *target = ((const char **)arg)[0];
+    const char *target_path = ((const char **)arg)[0];
     const char *read = ((const char **)arg)[1];
     */
 
     while (true) {
         const std::string TopApptest = getTopApp();
-
-        if (!getIntValue(need_read, value)) [[unlikely]] {
+        // std::cout << "包名: " << TopApptest << "\n";
+        printf("包名: %s\n", TopApptest.c_str());
+        if (!getIntValue(need_read_path, value)) [[unlikely]] {
             continue;
         }
 
-        if (value < 1001) [[unlikely]] {
+        // 当充电时，这里可能会导致电量百分比乱跳
+        if (value < 1001) {
             if (!getFloatValue(voltage_path, voltage_value)) [[unlikely]] {
                 continue;
             }
@@ -81,7 +92,10 @@ static inline void *heavyThread(void *)
             std::lock_guard<std::mutex> lock(confMutex);
             if (low_capacity < min_value) {
                 min_value = low_capacity;
-                lock_val(min_value, target);
+                // 防止低电量充电乱跳
+                if (min_value != 101) [[likely]] {
+                    lock_val(min_value, target_path);
+                }
                 // 低电量， 如果当前没在桌面，就关闭当前应用
                 // 通过打开桌面实现效果
                 appCloser(6);
@@ -89,7 +103,7 @@ static inline void *heavyThread(void *)
         }
         else {
             value = value / 100;
-            lock_val(value, target);
+            lock_val(value, target_path);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -100,11 +114,11 @@ static inline void ResetMin_value()
     static std::mutex confMutex;
     std::string value = "";
     while (true) {
-        if (!getStringValue(ChargingStatus, value)) [[unlikely]] {
+        if (!getStringValue(ChargingStatus_Path, value)) [[unlikely]] {
             continue;
         }
         // 如果是充电..
-        if (value.find("Discharging") == std::string::npos) [[likely]] {
+        if (value.find("Discharging") == std::string::npos) {
             // std::cout << "在充电\n";
             std::lock_guard<std::mutex> lock(confMutex);
             min_value = 101;
@@ -117,7 +131,7 @@ int main(int argc, char **argv)
 {
     pthread_setname_np(pthread_self(), "MainThread");
 
-    // const char *args[] = {target, need_read};
+    // const char *args[] = {target_path, need_read};
 
     pthread_t t;
     std::thread s(ResetMin_value);

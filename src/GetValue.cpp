@@ -39,8 +39,8 @@ bool getStringValue(const char *need_read, std::string &value)
     char buffer[13];
     value = "";
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        pclose(pipe);
         value += buffer;
+        pclose(pipe);
     }
     return true;
 }

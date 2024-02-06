@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <iostream>
 #include <string>
 #if 0
     基于shadow3aaa的版本，微调
@@ -9,7 +10,8 @@
 #endif
 auto getTopAppShell() -> std::string;
 bool getStringValue(const char *need_read, std::string &value);
-constexpr char TopappPid[] = "/sys/kernel/gbe/gbe2_fg_pid";
+bool getIntValue(const char *need_read, int &value);
+constexpr char TopAppPidPath[] = "/sys/kernel/gbe/gbe2_fg_pid";
 
 auto execCmdSync(const char *command) -> std::string
 {
@@ -29,27 +31,33 @@ auto execCmdSync(const char *command) -> std::string
 
 auto getTopApp() -> std::string
 {
-    if (!access(TopappPid, F_OK)) {
+    if (access(TopAppPidPath, F_OK)) [[unlikely]] {
+        // printf("路径不存在使用shell度报名");
         return getTopAppShell();
     }
 
-    std::string pid;
-    if (!getStringValue(TopappPid, pid)) [[unlikely]] {
-        chmod(TopappPid, 0666);
+    int pidInt = 0;
+    if (!getIntValue(TopAppPidPath, pidInt)) [[unlikely]] {
+        // printf("获取pid错误");
+        chmod(TopAppPidPath, 0666);
         return getTopAppShell();
     }
 
-    if (pid == "0") [[unlikely]] {
+    if (pidInt == 0) [[unlikely]] {
+        // printf("获取到pid为0");
         return getTopAppShell();
     }
-
+    std::string pid = std::to_string(pidInt);
     std::string name;
-    if (!getStringValue(("/proc/" + pid + "/cmdline").c_str(), name))
-        [[unlikely]] {
+    char cmdline[20];
+
+    sprintf(cmdline, "/proc/%s/cmdline", pid.c_str());
+    // printf("路径的cmdline是: %s\n", cmdlinePath);
+    // printf("sprintf的cmdline: %s", cmdline);
+    if (!getStringValue(cmdline, name)) [[unlikely]] {
         chmod(("/proc/" + pid + "/cmdline").c_str(), 0666);
         return getTopAppShell();
     }
-
     return name;
     //  return checkSymbol(name);
 }
@@ -58,7 +66,8 @@ auto getTopApp() -> std::string
 
 auto getTopAppShell() -> std::string
 {
-    std::string name = execCmdSync("/system/bin/dumpsys activity lru");
+    // printf("\n使用shell读取包名\n");
+    std::string name = execCmdSync("dumpsys activity lru");
     const auto pkgPos = name.find(" TOP") + 4;
     // find第二个参数:从指定的位置开始搜索
     name = name.substr(pkgPos, name.find('/', pkgPos) - pkgPos);
