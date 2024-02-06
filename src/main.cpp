@@ -40,6 +40,7 @@ bool getIntValue(const char *need_read, int &value);
 bool getStringValue(const char *need_read, std::string &value);
 
 static inline int getCapacity(const float &frs) { return frs * 10; }
+
 static inline void appCloser(const int &capacity)
 {
     // std::cout << "app closer开始运行\n";
@@ -73,12 +74,15 @@ static inline void *heavyThread(void *)
         // const std::string TopApp = getTopApp();
         // printf("包名: -%s-\n", TopApp.c_str());
         if (!getIntValue(need_read_path, value)) [[unlikely]] {
+            // printf("heavy线程无法读取needread\n");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
 
         // 当充电时，这里可能会导致电量百分比乱跳
         if (value < 1001) {
             if (!getFloatValue(voltage_path, voltage_value)) [[unlikely]] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 continue;
             }
 
@@ -107,13 +111,17 @@ static inline void *heavyThread(void *)
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
+
 static inline void ResetMin_value()
 {
     pthread_setname_np(pthread_self(), "ResetMinValue");
     static std::mutex confMutex;
     std::string value = "";
     while (true) {
+        // printf("开始\n");
         if (!getStringValue(ChargingStatus_Path, value)) [[unlikely]] {
+            // printf("读取充电状态error\n");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
         // printf("充电吗?-%s-\n", value.c_str());
@@ -134,7 +142,7 @@ int main(int argc, char **argv)
     // const char *args[] = {target_path, need_read};
 
     pthread_t t;
-    std::thread s(ResetMin_value);
+    std::thread s(&ResetMin_value);
     pthread_create(&t, NULL, &heavyThread, NULL);
     pthread_join(t, NULL);
     s.join();

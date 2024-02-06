@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <array>
 #include <iostream>
 #include <string>
 #if 0
@@ -8,11 +9,41 @@
     使用说明：直接接收getTopApp()函数的返回值即可获取包名
     例如：std::string TopApp = getTopApp();
 #endif
+
 auto getTopAppShell() -> std::string;
 bool getStringValue(const char *need_read, std::string &value);
 bool getIntValue(const char *need_read, int &value);
-constexpr char TopAppPidPath[] = "/sys/kernel/gbe/gbe2_fg_pid";
 
+constexpr char TopAppPidPath[] = "/sys/kernel/gbe/gbe2_fg_pid";
+constexpr std::array endFlag{'\n', '\0'};
+
+bool getStringValue(const char *need_read, std::string &value)
+{
+    FILE *pipe = fopen(need_read, "r");
+    if (pipe == nullptr) [[unlikely]] {
+        chmod(need_read, 0444);
+        return false;
+    }
+
+    char buffer[2];
+    value = "";
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        value += buffer;
+    }
+    size_t pos;
+    for (const auto &end : endFlag) {
+        if ((pos = value.find(end)) != std::string::npos) {
+            // 删除换行符号及其后面的内容
+            // value.erase(pos, pos + 1);
+
+            // 这样可以防止奇怪的多余符号
+            value = value.substr(0, pos);
+        }
+    }
+
+    pclose(pipe);
+    return true;
+}
 auto execCmdSync(const char *command) -> std::string
 {
     // 执行命令并获取输出
@@ -31,13 +62,13 @@ auto execCmdSync(const char *command) -> std::string
 
 auto getTopApp() -> std::string
 {
-    if (access(TopAppPidPath, F_OK)) [[unlikely]] {
+    if (access(TopAppPidPath, F_OK) == -1) [[unlikely]] {
         // printf("路径不存在使用shell度报名");
         return getTopAppShell();
     }
 
     std::string pid = "";
-    // char pid[6];
+
     if (!getStringValue(TopAppPidPath, pid)) [[unlikely]] {
         // printf("获取pid错误");
         chmod(TopAppPidPath, 0666);
@@ -60,13 +91,15 @@ auto getTopApp() -> std::string
     return name;
     //  return checkSymbol(name);
 }
+
 // 这个方式开销较大
 // execCmdSync("/system/bin/dumpsys", {"window", "visible-apps"});
 
+constexpr char getTopAppCmd[] = "dumpsys activity lru";
 auto getTopAppShell() -> std::string
 {
     // printf("\n使用shell读取包名\n");
-    std::string name = execCmdSync("dumpsys activity lru");
+    std::string name = execCmdSync(getTopAppCmd);
     const auto pkgPos = name.find(" TOP") + 4;
     // find第二个参数:从指定的位置开始搜索
     name = name.substr(pkgPos, name.find('/', pkgPos) - pkgPos);
@@ -76,5 +109,4 @@ auto getTopAppShell() -> std::string
     }
 
     return name;
-    // return checkSymbol(name);
 }
