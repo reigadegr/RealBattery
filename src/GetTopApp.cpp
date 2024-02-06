@@ -50,9 +50,7 @@ auto getTopApp() -> std::string
     }
 
     char cmdline[20];
-
     sprintf(cmdline, "/proc/%s/cmdline", pid.c_str());
-    // printf("路径的cmdline是: %s\n", cmdlinePath);
     // printf("sprintf的cmdline: %s", cmdline);
     std::string name = "";
     if (!getStringValue(cmdline, name)) [[unlikely]] {
