@@ -1,8 +1,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <fstream>
-
+#include <string>
 #if 0
     基于shadow3aaa的版本，微调
     使用说明：直接接收getTopApp()函数的返回值即可获取包名
@@ -27,12 +26,6 @@ auto execCmdSync(const char *command) -> std::string
     pclose(pipe);
     return result;
 }
-/*
- auto Testfile(const char *location)
-{
-    return access(location, F_OK) == 0;
-}
-*/
 
 auto getTopApp() -> std::string
 {
@@ -77,14 +70,3 @@ auto getTopAppShell() -> std::string
     return name;
     // return checkSymbol(name);
 }
-
-// 暂时不用
-/*
-auto checkSymbol(std::string &name) -> std::string {
-    if (auto colonPos = name.find(':'); colonPos != std::string::npos) {
-        // 截取冒号前边的部分
-        name = name.substr(0, colonPos);
-    }
-    return name;
-}
-*/

@@ -1,11 +1,9 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#include <mutex>
-// #include <algorithm>
 #include <array>
 #include <fstream>
-#include <iostream>
+#include <mutex>
 #include <thread>
 
 #include "LockValue.h"
@@ -18,7 +16,9 @@ constexpr char CloseApp[] =
     "nohup am start com.miui.home/com.miui.home.launcher.Launcher >/dev/null "
     "2>&1 &";
 constexpr char ChargingStatus[] = "/sys/class/power_supply/battery/status";
-constexpr std::array HOME{"com.miui.home", "bin.mt.plus", "com.omarea.vtools"};
+constexpr std::array WhiteList{"com.miui.home", "bin.mt.plus",
+                               "com.omarea.vtools", "com.tencent.mobileqq",
+                               "com.tencent.mm"};
 
 int value = 0;
 int min_value = 101;
@@ -32,14 +32,14 @@ bool getFloatValue(const char *need_read, float &value);
 bool getIntValue(const char *need_read, int &value);
 bool getStringValue(const char *need_read, std::string &value);
 
-static int getCapacity(const float &frs) { return frs * 10; }
+static inline int getCapacity(const float &frs) { return frs * 10; }
 static inline void appCloser(const int &capacity)
 {
     // std::cout << "app closer开始运行\n";
     // std::cout << "最小剩余电量百分比: " << min_value << std::endl;
     const std::string TopApp = getTopApp();
     if (min_value < capacity) {
-        for (const auto &app : HOME) {
+        for (const auto &app : WhiteList) {
             // 如果当前app在白名单，则不关闭
             if (TopApp.find(app) != std::string::npos) {
                 // std::cout << "白名单，返回\n";
@@ -67,7 +67,7 @@ static inline void *heavyThread(void *)
             continue;
         }
 
-        if (value < 1001) {
+        if (value < 1001) [[unlikely]] {
             if (!getFloatValue(voltage_path, voltage_value)) [[unlikely]] {
                 continue;
             }
@@ -112,6 +112,7 @@ static inline void ResetMin_value()
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
+
 int main(int argc, char **argv)
 {
     pthread_setname_np(pthread_self(), "MainThread");
