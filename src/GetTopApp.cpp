@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 #if 0
-    基于shadow3aaa的版本，微调
+    基于shadow3aaa的版本
     使用说明：直接接收getTopApp()函数的返回值即可获取包名
     例如：std::string TopApp = getTopApp();
 #endif
@@ -48,14 +48,15 @@ auto getTopApp() -> std::string
         return getTopAppShell();
     }
     std::string pid = std::to_string(pidInt);
-    std::string name;
+
     char cmdline[20];
 
     sprintf(cmdline, "/proc/%s/cmdline", pid.c_str());
     // printf("路径的cmdline是: %s\n", cmdlinePath);
     // printf("sprintf的cmdline: %s", cmdline);
+    std::string name = "";
     if (!getStringValue(cmdline, name)) [[unlikely]] {
-        chmod(("/proc/" + pid + "/cmdline").c_str(), 0666);
+        chmod(cmdline, 0666);
         return getTopAppShell();
     }
     return name;

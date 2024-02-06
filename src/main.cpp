@@ -70,9 +70,6 @@ static inline void *heavyThread(void *)
     */
 
     while (true) {
-        const std::string TopApptest = getTopApp();
-        // std::cout << "包名: " << TopApptest << "\n";
-        printf("包名: %s\n", TopApptest.c_str());
         if (!getIntValue(need_read_path, value)) [[unlikely]] {
             continue;
         }
