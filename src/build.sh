@@ -1,7 +1,7 @@
 #!/bin/sh
 
 FileName="$(basename $(dirname "$0"))"
-FileName="realbattery"
+FileName="RealBattery"
 remove_file(){
     rm -rf $(pwd)/*.bak $(pwd)/include/*.bak $(pwd)/config/*.bak $(dirname "$0")/*.bak
 }
@@ -32,7 +32,11 @@ compile_start(){
     $(pwd)/*.cpp -o $(dirname "$0")/$FileName && echo "*编译完成*" || exit 1
     /data/data/com.termux/files/usr/bin/aarch64-linux-android-strip $(dirname "$0")/$FileName
     chmod +x $(dirname "$0")/$FileName
-
+    
+    ldd $(pwd)/$FileName
+    
+    mv $(dirname "$0")/$FileName $(dirname "$0")/../magisk
+    
     echo "当前时间：$(date +%Y) 年 $(date +%m) 月 $(date +%d) 日 $(date +%H) 时 $(date +%M) 分 $(date +%S) 秒"
 }
 
@@ -44,5 +48,5 @@ remove_file 2>/dev/null
 #echo "------------开始运行...-------------------"
 #./$FileName
 #echo "------------结束运行...-------------------"
-ldd $(pwd)/$FileName
+
 #sh 启动.sh

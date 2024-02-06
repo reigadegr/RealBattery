@@ -3,8 +3,6 @@
 
 #include <mutex>
 // #include <algorithm>
-// #include <QApplication>
-// #include <QMessageBox>
 #include <array>
 #include <fstream>
 #include <iostream>
@@ -35,7 +33,7 @@ bool getIntValue(const char *need_read, int &value);
 bool getStringValue(const char *need_read, std::string &value);
 
 static int getCapacity(const float &frs) { return frs * 10; }
-void appCloser(const int &capacity)
+static inline void appCloser(const int &capacity)
 {
     // std::cout << "app closer开始运行\n";
     // std::cout << "最小剩余电量百分比: " << min_value << std::endl;
@@ -111,7 +109,6 @@ static inline void ResetMin_value()
             std::lock_guard<std::mutex> lock(confMutex);
             min_value = 101;
         }
-        // appCloser(102);
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }

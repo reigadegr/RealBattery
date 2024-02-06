@@ -1,0 +1,6 @@
+id=RealBattery
+name=小米设备的真实电量
+version=0.01
+versionCode=20240206
+author=酷安@灵聚神生 || github@reigadegr
+description=显示真实电量，电量过低时强行回退到桌面
