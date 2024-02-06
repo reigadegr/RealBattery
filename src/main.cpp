@@ -70,6 +70,8 @@ static inline void *heavyThread(void *)
     */
 
     while (true) {
+        // const std::string TopApp = getTopApp();
+        // printf("包名: -%s-\n", TopApp.c_str());
         if (!getIntValue(need_read_path, value)) [[unlikely]] {
             continue;
         }
@@ -114,6 +116,7 @@ static inline void ResetMin_value()
         if (!getStringValue(ChargingStatus_Path, value)) [[unlikely]] {
             continue;
         }
+        // printf("充电吗?-%s-\n", value.c_str());
         // 如果是充电..
         if (value.find("Discharging") == std::string::npos) {
             // std::cout << "在充电\n";

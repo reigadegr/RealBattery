@@ -36,18 +36,18 @@ auto getTopApp() -> std::string
         return getTopAppShell();
     }
 
-    int pidInt = 0;
-    if (!getIntValue(TopAppPidPath, pidInt)) [[unlikely]] {
+    std::string pid = "";
+    // char pid[6];
+    if (!getStringValue(TopAppPidPath, pid)) [[unlikely]] {
         // printf("获取pid错误");
         chmod(TopAppPidPath, 0666);
         return getTopAppShell();
     }
 
-    if (pidInt == 0) [[unlikely]] {
+    if (pid == "0") [[unlikely]] {
         // printf("获取到pid为0");
         return getTopAppShell();
     }
-    std::string pid = std::to_string(pidInt);
 
     char cmdline[20];
 
