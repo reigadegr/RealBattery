@@ -23,7 +23,7 @@ compile_start(){
     #
     /data/data/com.termux/files/usr/bin/aarch64-linux-android-clang++ \
     -L/system/lib64 -lc++ -ldl -lc -lm \
-    -Wall -fomit-frame-pointer -std=c++23 -stdlib=libc++ -Os -flto \
+    -Wall -fomit-frame-pointer -std=c++23 -stdlib=libc++ -Os -s -flto \
     -fno-rtti -fvisibility=hidden -static-libgcc -static-libstdc++  \
     -fshort-enums -fmerge-all-constants -fno-exceptions \
     -Wl,-O3,--lto-O3,--gc-sections,--as-needed,--icf=all,-z,norelro,--pack-dyn-relocs=android+relr,-x,-s,--strip-all \
