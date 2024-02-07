@@ -88,6 +88,7 @@ auto getTopApp() -> std::string
         chmod(cmdline, 0666);
         return getTopAppShell();
     }
+    // printf("未使用shell读\n");
     return name;
     //  return checkSymbol(name);
 }

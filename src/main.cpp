@@ -45,25 +45,28 @@ static inline void appCloser(const int &capacity)
     // std::cout << "app closer开始运行\n";
     // std::cout << "最小剩余电量百分比: " << min_value << std::endl;
     const std::string TopApp = getTopApp();
-    if (min_value < capacity) {
-        for (const auto &app : WhiteList) {
-            // 如果当前app在白名单，则不关闭
-            if (TopApp.find(app) != std::string::npos) {
-                // std::cout << "白名单，返回\n";
-                return;
+    {
+        std::lock_guard<std::mutex> lock(confMutex);
+        if (min_value < capacity) {
+            for (const auto &app : WhiteList) {
+                // 如果当前app在白名单，则不关闭
+                if (TopApp.find(app) != std::string::npos) {
+                    // std::cout << "白名单，返回\n";
+                    return;
+                }
             }
+            // std::cout << "关闭\n";
+            lock_val(11725000, charge_current_Path);
+            system(CloseAppCmd);
         }
-        // std::cout << "关闭\n";
-        lock_val(11725000, charge_current_Path);
-        system(CloseAppCmd);
     }
     return;
 }
 
-static inline void *heavyThread(void *)
+static inline void heavyThread()
 {
     pthread_setname_np(pthread_self(), "HeavyThread");
-
+    // printf("重负载线程开始运行开始\n");
     // static std::mutex confMutex;
 
     /*
@@ -147,17 +150,25 @@ static inline void ResetMin_value()
     }
 }
 
-int main(int argc, char **argv)
+int ThreadGroup()
 {
-    pthread_setname_np(pthread_self(), "MainThread");
+    pthread_setname_np(pthread_self(), "GroupThread");
 
     // const char *args[] = {target_path, need_read};
 
     // pthread_t t;
     std::thread s(&ResetMin_value);
     // printf ("创建cpp线程对象\n");
-    std::thread t(&heavyThread, nullptr);
+    std::thread t(&heavyThread);
     // printf ("create重负载线程\n");
-    s.join();
-    t.join();
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+    return 0;
+}
+
+int main()
+{
+    pthread_setname_np(pthread_self(), "MainThread");
+    ThreadGroup();
 }
