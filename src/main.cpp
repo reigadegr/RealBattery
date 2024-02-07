@@ -150,7 +150,7 @@ static inline void ResetMin_value()
     }
 }
 
-int ThreadGroup()
+static inline int ThreadGroup()
 {
     pthread_setname_np(pthread_self(), "GroupThread");
 
@@ -167,7 +167,7 @@ int ThreadGroup()
     return 0;
 }
 
-int main()
+int main(int argc, char **argv)
 {
     pthread_setname_np(pthread_self(), "MainThread");
     ThreadGroup();
