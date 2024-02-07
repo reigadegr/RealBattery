@@ -19,13 +19,19 @@ format_code(){
         nohup /data/data/com.termux/files/usr/bin/clang-format -i $i >/dev/null 2>&1 &
     done
 }
+
+#clang -o myprogram mysource.c -L/path/to/libraries -lmylib -Wl,-exclude-libs,driver.so
+
+# -static-libgcc -static-libstdc++
 compile_start(){
     #
     /data/data/com.termux/files/usr/bin/aarch64-linux-android-clang++ \
+    -static-libgcc -static-libstdc++ \
     -L/system/lib64 -lc++ -ldl -lc -lm \
     -Wall -fomit-frame-pointer -std=c++23 -stdlib=libc++ -Os -s -flto \
-    -fno-rtti -fvisibility=hidden -static-libgcc -static-libstdc++  \
+    -fno-rtti -fvisibility=hidden \
     -fshort-enums -fmerge-all-constants -fno-exceptions \
+    -Wl,-exclude-libs,libc++_shared.so \
     -Wl,-O3,--lto-O3,--gc-sections,--as-needed,--icf=all,-z,norelro,--pack-dyn-relocs=android+relr,-x,-s,--strip-all \
     $(pwd)/*.cpp -o $(dirname "$0")/$FileName && echo "*编译完成*" || exit 1
     /data/data/com.termux/files/usr/bin/aarch64-linux-android-strip $(dirname "$0")/$FileName
@@ -33,7 +39,7 @@ compile_start(){
     
     ldd $(pwd)/$FileName
     
-    mv $(dirname "$0")/$FileName $(dirname "$0")/../magisk
+    cp $(dirname "$0")/$FileName $(dirname "$0")/../magisk
     
     echo "当前时间：$(date +%Y) 年 $(date +%m) 月 $(date +%d) 日 $(date +%H) 时 $(date +%M) 分 $(date +%S) 秒"
 }
