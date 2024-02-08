@@ -25,9 +25,9 @@ constexpr char CloseAppCmd[] =
     "nohup am start com.miui.home/com.miui.home.launcher.Launcher >/dev/null "
     "2>&1 &";
 
-constexpr std::array WhiteList{"com.miui.home", "bin.mt.plus",
-                               "com.omarea.vtools", "com.tencent.mobileqq",
-                               "com.tencent.mm"};
+constexpr ::std::array WhiteList{"com.miui.home", "bin.mt.plus",
+                                 "com.omarea.vtools", "com.tencent.mobileqq",
+                                 "com.tencent.mm"};
 
 // int min_value = 101;
 bool isCharging = false;
@@ -51,13 +51,13 @@ static inline void appCloser(const int &low_capacity, const int &capacity)
         for (const auto &app : WhiteList) {
             // 如果当前app在白名单，则不关闭
             if (TopApp.find(app) != std::string::npos) {
-                printf("白名单，返回\n");
+                // printf("白名单，返回\n");
                 return;
             }
         }
         // std::cout << "关闭\n";
         lock_val(11725000, charge_current_Path);
-        printf("包名: %s关闭\n", TopApp.c_str());
+        // printf("包名: %s关闭\n", TopApp.c_str());
         system(CloseAppCmd);
     }
     // }
@@ -86,7 +86,7 @@ static inline void heavyThread()
             continue;
         }
         if (isCharging || highPercentage > 1000) {
-            printf("充电或电量大10通过读节点写入电量\n");
+            // printf("充电或电量大10通过读节点写入电量\n");
             highPercentage = highPercentage / 100;
             lock_val(highPercentage, target_path);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -100,7 +100,7 @@ static inline void heavyThread()
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
-        printf("使用读取电压写电量\n");
+        // printf("使用读取电压写电量\n");
         voltage_value = voltage_value / 1000000;
 
         // 这里电压值变成剩余百分比了
@@ -111,8 +111,8 @@ static inline void heavyThread()
 
         low_capacity = std::clamp(low_capacity, 0, 10);
 
-        printf("百分比是: %f\n", voltage_value);
-        printf("低电量值为: %d\n", low_capacity);
+        // printf("百分比是: %f\n", voltage_value);
+        // printf("低电量值为: %d\n", low_capacity);
         // printf("最小值: %d\n", min_value);
         // {
         // std::lock_guard<std::mutex> lock(confMutex);
@@ -157,7 +157,7 @@ static inline void ResetMiscValue()
     }
 }
 
-static inline int ThreadGroup()
+static inline void ThreadGroup()
 {
     pthread_setname_np(pthread_self(), "GroupThread");
 
@@ -168,10 +168,15 @@ static inline int ThreadGroup()
     // printf ("创建cpp线程对象\n");
     std::thread t(&heavyThread);
     // printf ("create重负载线程\n");
+
+    // s.join();
+    // t.join();
+
     while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::seconds(86400));
     }
-    return 0;
+
+    return;
 }
 
 int main(int argc, char **argv)
