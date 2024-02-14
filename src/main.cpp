@@ -25,9 +25,10 @@ constexpr char CloseAppCmd[] =
     "nohup am start com.miui.home/com.miui.home.launcher.Launcher >/dev/null "
     "2>&1 &";
 
-constexpr ::std::array WhiteList{"com.miui.home", "bin.mt.plus",
-                                 "com.omarea.vtools", "com.tencent.mobileqq",
-                                 "com.tencent.mm"};
+constexpr ::std::array WhiteList{
+    "com.miui.home",        "bin.mt.plus",        "com.omarea.vtools",
+    "com.tencent.mobileqq", "com.tencent.mm",     "com.android.settings",
+    "com.android.contacts", "com.android.camera", "com.android.mms"};
 
 // int min_value = 101;
 bool isCharging = false;
@@ -93,7 +94,6 @@ static inline void heavyThread()
             continue;
         }
 
-        // 当充电时，这里可能会导致电量百分比乱跳
         // 百分比小于等于10
 
         if (!getFloatValue(voltage_path, voltage_value)) [[unlikely]] {
@@ -149,6 +149,17 @@ static inline void ResetMiscValue()
             // std::lock_guard<std::mutex> lock(confMutex);
             isCharging = true;
             // min_value = 101;
+            int voltage_value = 0.0;
+            if (!getIntValue(voltage_path, voltage_value)) [[unlikely]] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                continue;
+            }
+            if (voltage_value > 4460000) {
+                lock_val(0, charge_current_Path);
+            }
+            else if (voltage_value < 4200000) {
+                lock_val(11725000, charge_current_Path);
+            }
         }
         else {
             isCharging = false;
@@ -168,21 +179,19 @@ static inline void ThreadGroup()
     // printf ("创建cpp线程对象\n");
     std::thread t(&heavyThread);
     // printf ("create重负载线程\n");
-
-    // s.join();
-    // t.join();
-
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(86400));
     }
-
-    return;
+    // s.join();
+    // t.join();
 }
 
 int main(int argc, char **argv)
 {
     pthread_setname_np(pthread_self(), "MainThread");
+    printf("hello");
     std::thread GroupThread(&ThreadGroup);
     GroupThread.join();
+
     // ThreadGroup();
 }
