@@ -5,27 +5,31 @@
 #include <array>
 #include <fstream>
 // #include <mutex>
+#include <iostream>
 #include <thread>
 
 #include "LockValue.h"
-constexpr float range = 3.7 - 3.4;
+static constexpr float range = 3.618 - 3.4;
 
-constexpr char voltage_path[] = "/sys/class/power_supply/battery/voltage_now";
+static constexpr char voltage_path[] =
+    "/sys/class/power_supply/battery/voltage_now";
 
-constexpr char target_path[] = "/sys/class/power_supply/bms/capacity";
+static constexpr char target_path[] = "/sys/class/power_supply/bms/capacity";
 
-constexpr char need_read_path[] = "/sys/class/power_supply/bms/capacity_raw";
+static constexpr char need_read_path[] =
+    "/sys/class/power_supply/bms/capacity_raw";
 
-constexpr char ChargingStatus_Path[] = "/sys/class/power_supply/battery/status";
+static constexpr char ChargingStatus_Path[] =
+    "/sys/class/power_supply/battery/status";
 
-constexpr char charge_current_Path[] =
+static constexpr char charge_current_Path[] =
     "/sys/class/power_supply/battery/constant_charge_current";
 
-constexpr char CloseAppCmd[] =
+static constexpr char CloseAppCmd[] =
     "nohup am start com.miui.home/com.miui.home.launcher.Launcher >/dev/null "
     "2>&1 &";
 
-constexpr ::std::array WhiteList{
+static constexpr ::std::array WhiteList{
     "com.miui.home",        "bin.mt.plus",        "com.omarea.vtools",
     "com.tencent.mobileqq", "com.tencent.mm",     "com.android.settings",
     "com.android.contacts", "com.android.camera", "com.android.mms"};
@@ -100,6 +104,10 @@ static inline void heavyThread()
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
+        /*
+        std::cout << "读到的东西: " << highPercentage << "\n";
+        std::cout << "电压: " << voltage_value << "\n";
+        */
         // printf("使用读取电压写电量\n");
         voltage_value = voltage_value / 1000000;
 
@@ -154,7 +162,7 @@ static inline void ResetMiscValue()
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 continue;
             }
-            if (voltage_value > 4460000) {
+            if (voltage_value > 4470000) {
                 lock_val(0, charge_current_Path);
             }
             else if (voltage_value < 4200000) {
